@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PND Command Center</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#060e1a;--bg2:#0a1628;--bg3:#0f1f3d;--glass:rgba(15,31,61,0.7);
+    --accent:#d4af37;--accent2:#f4c430;--text:#e2e8f0;--text2:#94a3b8;
+    --border:rgba(212,175,55,0.25);--success:#22c55e;--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;
+  }
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:var(--bg2)}
+  ::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+  .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#060e1a 0%,#0a1628 50%,#0f1f3d 100%);position:relative}
+  .login-wrap::before{content:'';position:absolute;inset:0;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="rgba(212,175,55,0.15)"/></svg>');background-size:30px 30px;opacity:.5}
+  .login-card{background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:16px;padding:48px;width:100%;max-width:420px;position:relative;z-index:1;box-shadow:0 25px 50px rgba(0,0,0,0.5)}
+  .login-logo{width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid var(--accent);margin:0 auto 20px;display:block}
+  .login-title{text-align:center;font-size:22px;font-weight:700;margin-bottom:4px;color:var(--accent)}
+  .login-sub{text-align:center;font-size:13px;color:var(--text2);margin-bottom:28px}
+  .form-group{margin-bottom:18px}
+  .form-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+  .form-input{width:100%;padding:12px 16px;background:rgba(6,14,26,0.8);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:.2s}
+  .form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(212,175,55,0.1)}
+  .btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#0a1628;font-weight:700;font-size:15px;cursor:pointer;transition:.2s}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 10px 30px rgba(212,175,55,0.3)}
+  .btn-sm{padding:8px 16px;font-size:12px;width:auto}
+  .btn-danger{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff}
+  .btn-info{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff}
+  .btn-success{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff}
+  .btn-warning{background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff}
+  .layout{display:flex;min-height:100vh}
+  .sidebar{width:260px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100}
+  .sidebar-header{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+  .sidebar-logo{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--accent)}
+  .sidebar-brand{font-size:14px;font-weight:700;color:var(--accent);line-height:1.2}
+  .sidebar-brand span{display:block;font-size:10px;color:var(--text2);font-weight:400}
+  .sidebar-nav{flex:1;padding:12px;overflow-y:auto}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;cursor:pointer;transition:.15s;margin-bottom:4px;font-size:13px;font-weight:500;color:var(--text2);border:none;background:none;width:100%;text-align:left}
+  .nav-item:hover{background:rgba(212,175,55,0.08);color:var(--text)}
+  .nav-item.active{background:linear-gradient(135deg,rgba(212,175,55,0.2),rgba(212,175,55,0.05));color:var(--accent);border:1px solid var(--border)}
+  .nav-icon{width:18px;text-align:center}
+  .sidebar-footer{padding:16px;border-top:1px solid var(--border);font-size:11px;color:var(--text2);text-align:center}
+  .main{flex:1;margin-left:260px;min-height:100vh}
+  .header{height:64px;background:var(--glass);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:50}
+  .header-title{font-size:18px;font-weight:700;color:var(--accent)}
+  .header-actions{display:flex;align-items:center;gap:12px}
+  .header-btn{padding:8px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;cursor:pointer;transition:.15s}
+  .header-btn:hover{border-color:var(--accent)}
+  .content{padding:28px}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:28px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:28px}
+  .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:28px}
+  .card{background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:14px;padding:24px;transition:.2s}
+  .card:hover{border-color:rgba(212,175,55,0.4)}
+  .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .card-title{font-size:14px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+  .card-value{font-size:32px;font-weight:800;color:var(--text);margin-bottom:4px}
+  .card-delta{font-size:12px;color:var(--success);font-weight:600}
+  .card-delta.negative{color:var(--danger)}
+  .card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;background:rgba(212,175,55,0.1);color:var(--accent)}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:12px 16px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:12px 16px;border-bottom:1px solid rgba(212,175,55,0.08);color:var(--text)}
+  tr:hover td{background:rgba(212,175,55,0.03)}
+  .badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+  .badge-submitted{background:rgba(59,130,246,0.15);color:#60a5fa}
+  .badge-under_review{background:rgba(245,158,11,0.15);color:#fbbf24}
+  .badge-approved{background:rgba(34,197,94,0.15);color:#4ade80}
+  .badge-rejected{background:rgba(239,68,68,0.15);color:#f87171}
+  .badge-active{background:rgba(34,197,94,0.15);color:#4ade80}
+  .badge-inactive{background:rgba(148,163,184,0.15);color:#94a3b8}
+  .badge-moderate{background:rgba(245,158,11,0.15);color:#fbbf24}
+  .badge-severe{background:rgba(239,68,68,0.15);color:#f87171}
+  .badge-minor{background:rgba(34,197,94,0.15);color:#4ade80}
+  .filter-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+  .filter-input,.filter-select{padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none;min-width:180px}
+  .filter-input:focus,.filter-select:focus{border-color:var(--accent)}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:200}
+  .modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px rgba(0,0,0,0.5)}
+  .modal-title{font-size:18px;font-weight:700;margin-bottom:20px;color:var(--accent)}
+  .modal-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .modal-footer{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--text2)}
+  .empty-state i{font-size:48px;color:var(--border);margin-bottom:16px;display:block}
+  .chart-container{position:relative;height:300px}
+  .tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:12px}
+  .tab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text2)}
+  .tab.active{background:rgba(212,175,55,0.15);color:var(--accent)}
+  .tab:hover:not(.active){color:var(--text)}
+  .toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;z-index:300;box-shadow:0 10px 30px rgba(0,0,0,0.3);animation:toastIn .3s ease}
+  @keyframes toastIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .toast.success{border-color:var(--success)}
+  .toast.error{border-color:var(--danger)}
+  .spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  .status-dot.online{background:var(--success);box-shadow:0 0 8px var(--success)}
+  .section-title{font-size:16px;font-weight:700;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .section-title i{font-size:14px}
+  .progress-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:8px}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .5s ease}
+  .quick-actions{display:flex;gap:12px;margin-bottom:28px}
+  .quick-btn{padding:14px 20px;background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:8px;flex:1;justify-content:center}
+  .quick-btn:hover{border-color:var(--accent);background:rgba(212,175,55,0.08)}
+  .quick-btn i{color:var(--accent)}
+  @media(max-width:1200px){.grid-4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:768px){.sidebar{width:100%;position:relative;height:auto}.main{margin-left:0}.grid-4,.grid-3,.grid-2{grid-template-columns:1fr}.modal-row{grid-template-columns:1fr}.header{padding:0 16px}.content{padding:16px}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, createContext, useContext } = React;
+
+// ─── API ───
+const API = window.location.origin;
+const api = {
+  get: (path) => fetch(API + path).then(r => r.json()),
+  post: (path, body) => fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json()),
+};
+
+// ─── Auth Context ───
+const AuthCtx = createContext();
+function AuthProvider({ children }) {
+  const [user, setUser] = useState(() => { try { return JSON.parse(localStorage.getItem('pnd_admin')) } catch { return null } });
+  const login = (u) => { localStorage.setItem('pnd_admin', JSON.stringify(u)); setUser(u); };
+  const logout = () => { localStorage.removeItem('pnd_admin'); setUser(null); };
+  return <AuthCtx.Provider value={{ user, login, logout }}>{children}</AuthCtx.Provider>;
+}
+
+// ─── Toast ───
+const ToastCtx = createContext();
+function ToastProvider({ children }) {
+  const [toasts, setToasts] = useState([]);
+  const show = (msg, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, msg, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
+  };
+  return (
+    <ToastCtx.Provider value={{ show }}>
+      {children}
+      <div>{toasts.map(t => <div key={t.id} className={`toast ${t.type}`}><i className={`fas fa-${t.type === 'success' ? 'check-circle' : 'exclamation-circle'}`}></i> {t.msg}</div>)}</div>
+    </ToastCtx.Provider>
+  );
+}
+
+// ─── Modal ───
+function Modal({ title, children, onClose, footer }) {
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-title">{title}</div>
+        {children}
+        {footer && <div className="modal-footer">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+// ─── Login Page ───
+function LoginPage({ onLogin }) {
+  const [pass, setPass] = useState('');
+  const [err, setErr] = useState('');
+  const handle = (e) => {
+    e.preventDefault();
+    if (pass === 'admin2025') { onLogin({ name: 'Administrator', role: 'super_admin' }); }
+    else { setErr('Invalid password'); }
+  };
+  return (
+    <div className="login-wrap">
+      <div className="login-card">
+        <img src="/logo.jpg" alt="PND" className="login-logo" onError={e => e.target.style.display='none'} />
+        <div className="login-title">Police Nationale de Djibouti</div>
+        <div className="login-sub">Command Center Dashboard</div>
+        <form onSubmit={handle}>
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <input className="form-input" type="password" placeholder="Enter admin password" value={pass} onChange={e => { setPass(e.target.value); setErr(''); }} />
+          </div>
+          {err && <div style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 12 }}>{err}</div>}
+          <button className="btn" type="submit">Sign In</button>
+        </form>
+        <div style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: 'var(--text2)' }}>Default: admin2025</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── KPI Cards ───
+function KPICards({ stats }) {
+  const cards = [
+    { label: 'Total Reports', value: stats?.total || 0, icon: 'fa-file-alt', delta: 'All time' },
+    { label: 'Today', value: stats?.today || 0, icon: 'fa-calendar-day', delta: 'New reports today' },
+    { label: 'Active Officers', value: stats?.activeOfficers || 0, icon: 'fa-user-shield', delta: 'On duty' },
+    { label: 'Pending Review', value: stats?.pendingReview || 0, icon: 'fa-clock', delta: 'Awaiting action' },
+  ];
+  return (
+    <div className="grid-4">
+      {cards.map((c, i) => (
+        <div className="card" key={i}>
+          <div className="card-header">
+            <div>
+              <div className="card-title">{c.label}</div>
+              <div className="card-value">{c.value}</div>
+              <div className="card-delta">{c.delta}</div>
+            </div>
+            <div className="card-icon"><i className={`fas ${c.icon}`}></i></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Chart Component ───
+function ChartJS({ type, data, options }) {
+  const canvasRef = useRef(null);
+  const chartRef = useRef(null);
+  useEffect(() => {
+    if (chartRef.current) chartRef.current.destroy();
+    if (canvasRef.current) {
+      chartRef.current = new Chart(canvasRef.current, { type, data, options });
+    }
+    return () => { if (chartRef.current) chartRef.current.destroy(); };
+  }, [data]);
+  return <canvas ref={canvasRef}></canvas>;
+}
+
+// ─── Dashboard Page ───
+function DashboardPage() {
+  const [stats, setStats] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { show } = useContext(ToastCtx);
+
+  useEffect(() => {
+    Promise.all([api.get('/api/trpc/analytics.executive'), api.get('/api/trpc/report.list?input={"json":{"limit":5}}')])
+      .then(([s, r]) => {
+        setStats(s.result?.data || {});
+        setReports(r.result?.data?.reports || []);
+        setLoading(false);
+      })
+      .catch(() => { show('Failed to load data', 'error'); setLoading(false); });
+  }, []);
+
+  const timeData = {
+    labels: reports.slice(0, 7).map(r => r.accidentDate?.slice(5) || '').reverse(),
+    datasets: [{ label: 'Reports', data: reports.slice(0, 7).map(() => 1).reverse(), backgroundColor: 'rgba(212,175,55,0.6)', borderColor: '#d4af37', borderWidth: 2, borderRadius: 6 }]
+  };
+
+  return (
+    <div>
+      <div className="header"><div className="header-title"><i className="fas fa-shield-alt"></i> Dashboard</div></div>
+      <div className="content">
+        {loading ? <div className="empty-state"><span className="spinner"></span> Loading...</div> : <>
+          <KPICards stats={stats} />
+          <div className="grid-2">
+            <div className="card">
+              <div className="card-header"><div className="section-title"><i className="fas fa-chart-bar"></i> Recent Activity</div></div>
+              <div className="chart-container">
+                {reports.length > 0 ? <ChartJS type="bar" data={timeData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } } } }} /> : <div className="empty-state">No data yet</div>}
+              </div>
+            </div>
+            <div className="card">
+              <div className="card-header"><div className="section-title"><i className="fas fa-list"></i> Latest Reports</div></div>
+              <div className="table-wrap">
+                <table>
+                  <thead><tr><th>ID</th><th>Location</th><th>Severity</th><th>Status</th><th>Date</th></tr></thead>
+                  <tbody>
+                    {reports.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', color: 'var(--text2)' }}>No reports yet</td></tr>}
+                    {reports.map(r => (
+                      <tr key={r.id}>
+                        <td><strong>{r.reportId}</strong></td>
+                        <td>{r.location}</td>
+                        <td><span className={`badge badge-${r.severity}`}>{r.severity}</span></td>
+                        <td><span className={`badge badge-${r.status}`}>{r.status?.replace(/_/g, ' ')}</span></td>
+                        <td>{r.accidentDate}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-header"><div className="section-title"><i className="fas fa-fire"></i> Accident Hotspots</div></div>
+            {stats?.hotspots?.length > 0 ? (
+              <div className="table-wrap">
+                <table>
+                  <thead><tr><th>Location</th><th>Report Count</th><th>Trend</th></tr></thead>
+                  <tbody>
+                    {stats.hotspots.map((h, i) => (
+                      <tr key={i}>
+                        <td><i className="fas fa-map-marker-alt" style={{ color: 'var(--accent)', marginRight: 8 }}></i>{h.location}</td>
+                        <td><strong>{h.count}</strong></td>
+                        <td><div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(100, (h.count / (stats.hotspots[0]?.count || 1)) * 100)}%` }}></div></div></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : <div className="empty-state">No hotspot data available</div>}
+          </div>
+        </>}
+      </div>
+    </div>
+  );
+}
+
+// ─── Reports Page ───
+function ReportsPage() {
+  const [reports, setReports] = useState([]);
+  const [filter, setFilter] = useState({ status: '', severity: '', search: '' });
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+  const { show } = useContext(ToastCtx);
+
+  const load = () => {
+    setLoading(true);
+    const q = new URLSearchParams();
+    const input = { json: { limit: 100 } };
+    if (filter.status) input.json.status = filter.status;
+    if (filter.severity) input.json.severity = filter.severity;
+    if (filter.search) input.json.search = filter.search;
+    q.set('input', JSON.stringify(input));
+    api.get('/api/trpc/report.list?' + q.toString())
+      .then(r => { setReports(r.result?.data?.reports || []); setLoading(false); })
+      .catch(() => { show('Failed to load reports', 'error'); setLoading(false); });
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const updateStatus = (id, status) => {
+    api.post('/api/trpc/report.updateStatus', { json: { id, status } })
+      .then(() => { show('Status updated'); load(); })
+      .catch(() => show('Update failed', 'error'));
+  };
+
+  const deleteReport = (id) => {
+    if (!confirm('Delete this report?')) return;
+    api.post('/api/trpc/report.delete', { json: { id } })
+      .then(() => { show('Report deleted'); load(); })
+      .catch(() => show('Delete failed', 'error'));
+  };
+
+  return (
+    <div>
+      <div className="header"><div className="header-title"><i className="fas fa-file-alt"></i> Accident Reports</div></div>
+      <div className="content">
+        <div className="filter-bar">
+          <input className="filter-input" placeholder="Search location or ID..." value={filter.search} onChange={e => setFilter({ ...filter, search: e.target.value })} />
+          <select className="filter-select" value={filter.status} onChange={e => setFilter({ ...filter, status: e.target.value })}>
+            <option value="">All Status</option>
+            <option value="submitted">Submitted</option>
+            <option value="under_review">Under Review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <select className="filter-select" value={filter.severity} onChange={e => setFilter({ ...filter, severity: e.target.value })}>
+            <option value="">All Severity</option>
+            <option value="minor">Minor</option>
+            <option value="moderate">Moderate</option>
+            <option value="severe">Severe</option>
+          </select>
+          <button className="header-btn" onClick={load}><i className="fas fa-search"></i> Search</button>
+          <button className="header-btn" onClick={() => { setFilter({ status: '', severity: '', search: '' }); setTimeout(load, 100); }}><i className="fas fa-undo"></i> Reset</button>
+        </div>
+        <div className="card">
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Report ID</th><th>Location</th><th>Date</th><th>Time</th><th>Type</th><th>Weather</th><th>Road</th><th>Severity</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                {loading && <tr><td colSpan="10" style={{ textAlign: 'center' }}><span className="spinner"></span></td></tr>}
+                {!loading && reports.length === 0 && <tr><td colSpan="10" className="empty-state">No reports found</td></tr>}
+                {reports.map(r => (
+                  <tr key={r.id}>
+                    <td><strong>{r.reportId}</strong></td>
+                    <td>{r.location}</td>
+                    <td>{r.accidentDate}</td>
+                    <td>{r.accidentTime}</td>
+                    <td>{r.accidentType || '-'}</td>
+                    <td>{r.weather || '-'}</td>
+                    <td>{r.roadCondition || '-'}</td>
+                    <td><span className={`badge badge-${r.severity}`}>{r.severity}</span></td>
+                    <td><span className={`badge badge-${r.status}`}>{r.status?.replace(/_/g, ' ')}</span></td>
+                    <td>
+                      <button className="header-btn btn-sm btn-info" onClick={() => setSelected(r)} title="View"><i className="fas fa-eye"></i></button>
+                      <button className="header-btn btn-sm btn-success" onClick={() => updateStatus(r.id, 'approved')} title="Approve"><i className="fas fa-check"></i></button>
+                      <button className="header-btn btn-sm btn-warning" onClick={() => updateStatus(r.id, 'under_review')} title="Review"><i className="fas fa-gavel"></i></button>
+                      <button className="header-btn btn-sm btn-danger" onClick={() => deleteReport(r.id)} title="Delete"><i className="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {selected && (
+        <Modal title={`Report ${selected.reportId}`} onClose={() => setSelected(null)} footer={<button className="btn btn-sm" onClick={() => setSelected(null)}>Close</button>}>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div className="modal-row">
+              <div className="form-group"><label className="form-label">Location</label><div className="form-input" style={{ background: 'var(--bg3)' }}>{selected.location}</div></div>
+              <div className="form-group"><label className="form-label">Coordinates</label><div className="form-input" style={{ background: 'var(--bg3)' }}>{selected.latitude}, {selected.longitude}</div></div>
+            </div>
+            <div className="modal-row">
+              <div className="form-group"><label className="form-label">Date</label><div className="form-input" style={{ background: 'var(--bg3)' }}>{selected.accidentDate}</div></div>
+              <div className="form-group"><label className="form-label">Time</label><div className="form-input" style={{ background: 'var(--bg3)' }}>{selected.accidentTime}</div></div>
+            </div>
+            <div className="modal-row">
+              <div className="form-group"><label className="form-label">Severity</label><div className="form-input" style={{ background: 'var(--bg3)' }}>{selected.severity}</div></div>
+              <div className="form-group"><label className="form-label">Status</label><div className="form-input" style={{ background: 'var(--bg3)' }}>{selected.status}</div></div>
+            </div>
+            <div className="modal-row">
+              <div className="form-group"><label className="form-label">Weather</label><div className="form-input" style={{ background: 'var(--bg3)' }}>{selected.weather || '-'}</div></div>
+              <div className="form-group"><label className="form-label">Road Condition</label><div className="form-input" style={{ background: 'var(--bg3)' }}>{selected.roadCondition || '-'}</div></div>
+            </div>
+            <div className="form-group"><label className="form-label">Description</label><textarea className="form-input" rows="3" readOnly value={selected.description || '-'} style={{ background: 'var(--bg3)', resize: 'none' }}></textarea></div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── Daily Reports Page ───
+function DailyReportsPage() {
+  const [reports, setReports] = useState([]);
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [loading, setLoading] = useState(false);
+  const { show } = useContext(ToastCtx);
+
+  const load = () => {
+    setLoading(true);
+    api.get('/api/trpc/report.list?input={"json":{"limit":500}}')
+      .then(r => {
+        const all = r.result?.data?.reports || [];
+        setReports(all.filter(x => x.accidentDate === date));
+        setLoading(false);
+      })
+      .catch(() => { show('Failed to load', 'error'); setLoading(false); });
+  };
+
+  useEffect(() => { load(); }, [date]);
+
+  const bySeverity = { minor: 0, moderate: 0, severe: 0 };
+  reports.forEach(r => { bySeverity[r.severity] = (bySeverity[r.severity] || 0) + 1; });
+  const byType = {};
+  reports.forEach(r => { if (r.accidentType) byType[r.accidentType] = (byType[r.accidentType] || 0) + 1; });
+
+  return (
+    <div>
+      <div className="header"><div className="header-title"><i className="fas fa-calendar-day"></i> Daily Reports</div></div>
+      <div className="content">
+        <div className="filter-bar">
+          <input className="filter-input" type="date" value={date} onChange={e => setDate(e.target.value)} />
+          <button className="header-btn" onClick={load}><i className="fas fa-sync"></i> Refresh</button>
+        </div>
+        <KPICards stats={{ total: reports.length, today: reports.length, activeOfficers: 0, pendingReview: reports.filter(r => r.status === 'under_review').length }} />
+        <div className="grid-2">
+          <div className="card">
+            <div className="section-title"><i className="fas fa-chart-pie"></i> By Severity</div>
+            <div className="chart-container">
+              <ChartJS type="doughnut" data={{ labels: ['Minor', 'Moderate', 'Severe'], datasets: [{ data: [bySeverity.minor, bySeverity.moderate, bySeverity.severe], backgroundColor: ['rgba(34,197,94,0.7)', 'rgba(245,158,11,0.7)', 'rgba(239,68,68,0.7)'], borderColor: ['#22c55e', '#f59e0b', '#ef4444'], borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }} />
+            </div>
+          </div>
+          <div className="card">
+            <div className="section-title"><i className="fas fa-list"></i> Report List ({reports.length})</div>
+            <div className="table-wrap" style={{ maxHeight: 320, overflowY: 'auto' }}>
+              <table>
+                <thead><tr><th>ID</th><th>Location</th><th>Type</th><th>Severity</th><th>Status</th></tr></thead>
+                <tbody>
+                  {reports.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', color: 'var(--text2)' }}>No reports for {date}</td></tr>}
+                  {reports.map(r => (
+                    <tr key={r.id}><td>{r.reportId}</td><td>{r.location}</td><td>{r.accidentType || '-'}</td><td><span className={`badge badge-${r.severity}`}>{r.severity}</span></td><td><span className={`badge badge-${r.status}`}>{r.status?.replace(/_/g, ' ')}</span></td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        {Object.keys(byType).length > 0 && (
+          <div className="card">
+            <div className="section-title"><i className="fas fa-car-crash"></i> By Accident Type</div>
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>Type</th><th>Count</th></tr></thead>
+                <tbody>
+                  {Object.entries(byType).sort((a, b) => b[1] - a[1]).map(([t, c]) => (
+                    <tr key={t}><td>{t}</td><td><strong>{c}</strong></td></tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Weekly Reports Page ───
+function WeeklyReportsPage() {
+  const [reports, setReports] = useState([]);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const { show } = useContext(ToastCtx);
+
+  useEffect(() => {
+    api.get('/api/trpc/report.list?input={"json":{"limit":500}}')
+      .then(r => {
+        const all = r.result?.data?.reports || [];
+        const now = new Date();
+        now.setDate(now.getDate() - weekOffset * 7);
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        const filtered = all.filter(r => { const d = new Date(r.accidentDate); return d >= weekStart && d <= weekEnd; });
+        setReports(filtered);
+      })
+      .catch(() => show('Failed to load', 'error'));
+  }, [weekOffset]);
+
+  const daily = {};
+  reports.forEach(r => { daily[r.accidentDate] = (daily[r.accidentDate] || 0) + 1; });
+  const days = Object.entries(daily).sort((a, b) => a[0].localeCompare(b[0]));
+
+  return (
+    <div>
+      <div className="header"><div className="header-title"><i className="fas fa-calendar-week"></i> Weekly Reports</div></div>
+      <div className="content">
+        <div className="filter-bar">
+          <button className="header-btn" onClick={() => setWeekOffset(weekOffset + 1)}><i className="fas fa-chevron-left"></i> Previous</button>
+          <span style={{ color: 'var(--text2)', fontSize: 14, alignSelf: 'center' }}>Week {weekOffset === 0 ? '(Current)' : `-${weekOffset}`}</span>
+          <button className="header-btn" onClick={() => setWeekOffset(Math.max(0, weekOffset - 1))} disabled={weekOffset === 0}><i className="fas fa-chevron-right"></i> Next</button>
+        </div>
+        <KPICards stats={{ total: reports.length, today: reports.filter(r => r.accidentDate === new Date().toISOString().split('T')[0]).length, activeOfficers: 0, pendingReview: reports.filter(r => r.status === 'under_review').length }} />
+        <div className="card">
+          <div className="section-title"><i className="fas fa-chart-line"></i> Daily Distribution</div>
+          <div className="chart-container">
+            {days.length > 0 ? <ChartJS type="line" data={{ labels: days.map(d => d[0].slice(5)), datasets: [{ label: 'Reports', data: days.map(d => d[1]), borderColor: '#d4af37', backgroundColor: 'rgba(212,175,55,0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#d4af37', pointBorderColor: '#fff', pointBorderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } } } }} /> : <div className="empty-state">No data for this week</div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Monthly Reports Page ───
+function MonthlyReportsPage() {
+  const [reports, setReports] = useState([]);
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const { show } = useContext(ToastCtx);
+
+  useEffect(() => {
+    api.get('/api/trpc/report.list?input={"json":{"limit":500}}')
+      .then(r => {
+        const all = r.result?.data?.reports || [];
+        setReports(all.filter(r => r.accidentDate?.startsWith(month)));
+      })
+      .catch(() => show('Failed to load', 'error'));
+  }, [month]);
+
+  const byDay = {};
+  reports.forEach(r => { const d = r.accidentDate?.slice(8, 10) || '00'; byDay[d] = (byDay[d] || 0) + 1; });
+  const days = Object.entries(byDay).sort((a, b) => a[0].localeCompare(b[0]));
+
+  return (
+    <div>
+      <div className="header"><div className="header-title"><i className="fas fa-calendar-alt"></i> Monthly Reports</div></div>
+      <div className="content">
+        <div className="filter-bar">
+          <input className="filter-input" type="month" value={month} onChange={e => setMonth(e.target.value)} />
+        </div>
+        <KPICards stats={{ total: reports.length, today: reports.filter(r => r.accidentDate === new Date().toISOString().split('T')[0]).length, activeOfficers: 0, pendingReview: reports.filter(r => r.status === 'under_review').length }} />
+        <div className="card">
+          <div className="section-title"><i className="fas fa-chart-bar"></i> Monthly Distribution</div>
+          <div className="chart-container">
+            {days.length > 0 ? <ChartJS type="bar" data={{ labels: days.map(d => d[0]), datasets: [{ label: 'Reports', data: days.map(d => d[1]), backgroundColor: 'rgba(212,175,55,0.7)', borderColor: '#d4af37', borderWidth: 1, borderRadius: 4 }] }} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } } } }} /> : <div className="empty-state">No data for {month}</div>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Officers Page ───
+function OfficersPage() {
+  const [officers, setOfficers] = useState([]);
+  const [stations, setStations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(false);
+  const [edit, setEdit] = useState(null);
+  const [form, setForm] = useState({ firstName: '', lastName: '', badgeNumber: '', rank: 'constable', stationId: 1, phone: '', email: '' });
+  const { show } = useContext(ToastCtx);
+
+  const load = () => {
+    setLoading(true);
+    Promise.all([api.get('/api/trpc/officer.list?input={"json":{}}'), api.get('/api/trpc/officer.stations')])
+      .then(([o, s]) => {
+        setOfficers(o.result?.data?.officers || []);
+        setStations(s.result?.data || []);
+        setLoading(false);
+      })
+      .catch(() => { show('Failed to load officers', 'error'); setLoading(false); });
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const save = () => {
+    if (!form.firstName || !form.lastName) { show('First and last name required', 'error'); return; }
+    const payload = edit ? { json: { ...form, id: edit.id } } : { json: form };
+    api.post(edit ? '/api/trpc/officer.update' : '/api/trpc/officer.create', payload)
+      .then(() => { show(edit ? 'Officer updated' : 'Officer created'); setModal(false); setEdit(null); setForm({ firstName: '', lastName: '', badgeNumber: '', rank: 'constable', stationId: 1, phone: '', email: '' }); load(); })
+      .catch(() => show('Save failed', 'error'));
+  };
+
+  const del = (id) => { if (!confirm('Delete officer?')) return; api.post('/api/trpc/officer.delete', { json: { id } }).then(() => { show('Deleted'); load(); }); };
+
+  const openEdit = (o) => { setEdit(o); setForm({ firstName: o.firstName, lastName: o.lastName, badgeNumber: o.badgeNumber, rank: o.rank, stationId: o.stationId, phone: o.phone || '', email: o.email || '' }); setModal(true); };
+
+  return (
+    <div>
+      <div className="header">
+        <div className="header-title"><i className="fas fa-user-shield"></i> Officers</div>
+        <div className="header-actions">
+          <button className="header-btn" onClick={() => { setEdit(null); setForm({ firstName: '', lastName: '', badgeNumber: '', rank: 'constable', stationId: 1, phone: '', email: '' }); setModal(true); }}><i className="fas fa-plus"></i> Add Officer</button>
+        </div>
+      </div>
+      <div className="content">
+        <div className="card">
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Badge #</th><th>Name</th><th>Rank</th><th>Station</th><th>Auth Code</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                {loading && <tr><td colSpan="7" style={{ textAlign: 'center' }}><span className="spinner"></span></td></tr>}
+                {!loading && officers.length === 0 && <tr><td colSpan="7" className="empty-state">No officers. Click "Add Officer" to create one.</td></tr>}
+                {officers.map(o => (
+                  <tr key={o.id}>
+                    <td><strong>{o.badgeNumber}</strong></td>
+                    <td>{o.firstName} {o.lastName}</td>
+                    <td>{o.rank}</td>
+                    <td>{stations.find(s => s.id === o.stationId)?.name || 'PND'}</td>
+                    <td><code style={{ background: 'var(--bg3)', padding: '4px 8px', borderRadius: 6, fontSize: 12 }}>{o.authCode}</code></td>
+                    <td><span className={`badge badge-${o.status}`}>{o.status}</span></td>
+                    <td>
+                      <button className="header-btn btn-sm btn-info" onClick={() => openEdit(o)} title="Edit"><i className="fas fa-edit"></i></button>
+                      <button className="header-btn btn-sm btn-danger" onClick={() => del(o.id)} title="Delete"><i className="fas fa-trash"></i></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {modal && (
+        <Modal title={edit ? 'Edit Officer' : 'Add Officer'} onClose={() => setModal(false)} footer={<>
+          <button className="btn btn-sm" onClick={save}>{edit ? 'Update' : 'Create'}</button>
+          <button className="header-btn btn-sm" onClick={() => setModal(false)}>Cancel</button>
+        </>}>
+          <div className="modal-row">
+            <div className="form-group"><label className="form-label">First Name *</label><input className="form-input" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} /></div>
+            <div className="form-group"><label className="form-label">Last Name *</label><input className="form-input" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} /></div>
+          </div>
+          <div className="modal-row">
+            <div className="form-group"><label className="form-label">Badge Number</label><input className="form-input" value={form.badgeNumber} onChange={e => setForm({ ...form, badgeNumber: e.target.value })} placeholder="Auto-generated if empty" /></div>
+            <div className="form-group"><label className="form-label">Rank</label><select className="form-input" value={form.rank} onChange={e => setForm({ ...form, rank: e.target.value })}><option>constable</option><option>corporal</option><option>sergeant</option><option>lieutenant</option><option>captain</option><option>commander</option><option>superintendent</option></select></div>
+          </div>
+          <div className="modal-row">
+            <div className="form-group"><label className="form-label">Station</label><select className="form-input" value={form.stationId} onChange={e => setForm({ ...form, stationId: parseInt(e.target.value) })}>{stations.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
+            <div className="form-group"><label className="form-label">Phone</label><input className="form-input" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+          </div>
+          <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// ─── Analytics Page ───
+function AnalyticsPage() {
+  const [exec, setExec] = useState(null);
+  const [timeSeries, setTimeSeries] = useState([]);
+  const [byType, setByType] = useState([]);
+  const [byWeather, setByWeather] = useState([]);
+  const [byRoad, setByRoad] = useState([]);
+  const { show } = useContext(ToastCtx);
+
+  useEffect(() => {
+    Promise.all([
+      api.get('/api/trpc/analytics.executive'),
+      api.get('/api/trpc/analytics.timeSeries'),
+      api.get('/api/trpc/analytics.byType'),
+      api.get('/api/trpc/analytics.byWeather'),
+      api.get('/api/trpc/analytics.byRoadCondition'),
+    ]).then(([e, t, ty, w, r]) => {
+      setExec(e.result?.data || {});
+      setTimeSeries(t.result?.data || []);
+      setByType(ty.result?.data || []);
+      setByWeather(w.result?.data || []);
+      setByRoad(r.result?.data || []);
+    }).catch(() => show('Failed to load analytics', 'error'));
+  }, []);
+
+  const colors = ['#d4af37', '#3b82f6', '#22c55e', '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+
+  return (
+    <div>
+      <div className="header"><div className="header-title"><i className="fas fa-chart-line"></i> Analytics</div></div>
+      <div className="content">
+        {exec && <KPICards stats={exec} />}
+        <div className="grid-2">
+          <div className="card">
+            <div className="section-title"><i className="fas fa-chart-line"></i> Time Series (30 Days)</div>
+            <div className="chart-container">
+              {timeSeries.length > 0 ? <ChartJS type="line" data={{ labels: timeSeries.map(d => d.period?.slice(5) || ''), datasets: [{ label: 'Reports', data: timeSeries.map(d => d.count), borderColor: '#d4af37', backgroundColor: 'rgba(212,175,55,0.1)', fill: true, tension: 0.3, pointBackgroundColor: '#d4af37' }] }} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } } } }} /> : <div className="empty-state">No time series data</div>}
+            </div>
+          </div>
+          <div className="card">
+            <div className="section-title"><i className="fas fa-car-crash"></i> By Accident Type</div>
+            <div className="chart-container">
+              {byType.length > 0 ? <ChartJS type="doughnut" data={{ labels: byType.map(d => d.accident_type), datasets: [{ data: byType.map(d => d.count), backgroundColor: colors }] }} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 16 } } } }} /> : <div className="empty-state">No type data</div>}
+            </div>
+          </div>
+        </div>
+        <div className="grid-2">
+          <div className="card">
+            <div className="section-title"><i className="fas fa-cloud-sun"></i> By Weather Condition</div>
+            <div className="chart-container">
+              {byWeather.length > 0 ? <ChartJS type="bar" data={{ labels: byWeather.map(d => d.weather), datasets: [{ label: 'Reports', data: byWeather.map(d => d.count), backgroundColor: 'rgba(59,130,246,0.7)', borderColor: '#3b82f6', borderWidth: 1, borderRadius: 4 }] }} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } } } }} /> : <div className="empty-state">No weather data</div>}
+            </div>
+          </div>
+          <div className="card">
+            <div className="section-title"><i className="fas fa-road"></i> By Road Condition</div>
+            <div className="chart-container">
+              {byRoad.length > 0 ? <ChartJS type="bar" data={{ labels: byRoad.map(d => d.roadCondition), datasets: [{ label: 'Reports', data: byRoad.map(d => d.count), backgroundColor: 'rgba(34,197,94,0.7)', borderColor: '#22c55e', borderWidth: 1, borderRadius: 4 }] }} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(212,175,55,0.05)' } } } }} /> : <div className="empty-state">No road condition data</div>}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Audit Log Page ───
+function AuditPage() {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { show } = useContext(ToastCtx);
+
+  useEffect(() => {
+    api.get('/api/trpc/audit.list?input={"json":{"limit":100}}')
+      .then(r => { setLogs(r.result?.data?.logs || []); setLoading(false); })
+      .catch(() => { show('Failed to load audit logs', 'error'); setLoading(false); });
+  }, []);
+
+  return (
+    <div>
+      <div className="header"><div className="header-title"><i className="fas fa-clipboard-list"></i> Audit Log</div></div>
+      <div className="content">
+        <div className="card">
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Action</th><th>Resource</th><th>Details</th><th>Time</th></tr></thead>
+              <tbody>
+                {loading && <tr><td colSpan="5" style={{ textAlign: 'center' }}><span className="spinner"></span></td></tr>}
+                {!loading && logs.length === 0 && <tr><td colSpan="5" className="empty-state">No audit logs</td></tr>}
+                {logs.map(l => (
+                  <tr key={l.id}>
+                    <td>{l.id}</td>
+                    <td><span className="badge badge-info" style={{ background: 'rgba(59,130,246,0.15)', color: '#60a5fa' }}>{l.action}</span></td>
+                    <td>{l.resource}</td>
+                    <td>{l.details}</td>
+                    <td>{new Date(l.createdAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Settings Page ───
+function SettingsPage() {
+  const [settings, setSettings] = useState({ apiUrl: window.location.origin, stationName: 'PND Headquarters', adminEmail: '', autoApprove: false });
+  const { show } = useContext(ToastCtx);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('pnd_settings');
+    if (saved) setSettings({ ...settings, ...JSON.parse(saved) });
+  }, []);
+
+  const save = () => { localStorage.setItem('pnd_settings', JSON.stringify(settings)); show('Settings saved'); };
+
+  return (
+    <div>
+      <div className="header"><div className="header-title"><i className="fas fa-cog"></i> Settings</div></div>
+      <div className="content">
+        <div className="grid-2">
+          <div className="card">
+            <div className="section-title"><i className="fas fa-server"></i> System</div>
+            <div className="form-group"><label className="form-label">API Endpoint URL</label><input className="form-input" value={settings.apiUrl} onChange={e => setSettings({ ...settings, apiUrl: e.target.value })} /></div>
+            <div className="form-group"><label className="form-label">Station Name</label><input className="form-input" value={settings.stationName} onChange={e => setSettings({ ...settings, stationName: e.target.value })} /></div>
+            <div className="form-group"><label className="form-label">Admin Email</label><input className="form-input" type="email" value={settings.adminEmail} onChange={e => setSettings({ ...settings, adminEmail: e.target.value })} /></div>
+            <div className="form-group"><label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}><input type="checkbox" checked={settings.autoApprove} onChange={e => setSettings({ ...settings, autoApprove: e.target.checked })} style={{ width: 16, height: 16, accentColor: 'var(--accent)' }} /> Auto-approve new reports</label></div>
+            <button className="btn btn-sm" onClick={save} style={{ width: 'auto', marginTop: 8 }}><i className="fas fa-save"></i> Save Settings</button>
+          </div>
+          <div className="card">
+            <div className="section-title"><i className="fas fa-info-circle"></i> About</div>
+            <div style={{ color: 'var(--text2)', fontSize: 14, lineHeight: 1.8 }}>
+              <p><strong style={{ color: 'var(--accent)' }}>PND Command Center</strong></p>
+              <p>Version 1.0.0</p>
+              <p>Police Nationale de Djibouti</p>
+              <p style={{ marginTop: 12 }}>This dashboard provides real-time monitoring and management of accident reports submitted by officers in the field.</p>
+              <p style={{ marginTop: 8 }}><strong>Features:</strong></p>
+              <ul style={{ marginLeft: 20, marginTop: 4 }}>
+                <li>Real-time accident report management</li>
+                <li>Officer authentication with 6-digit codes</li>
+                <li>Daily, weekly, and monthly analytics</li>
+                <li>Comprehensive audit logging</li>
+                <li>Weather and road condition tracking</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── App Layout ───
+function AppLayout({ page, setPage, onLogout }) {
+  const navItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: 'fa-tachometer-alt' },
+    { id: 'reports', label: 'Accident Reports', icon: 'fa-file-alt' },
+    { id: 'daily', label: 'Daily Reports', icon: 'fa-calendar-day' },
+    { id: 'weekly', label: 'Weekly Reports', icon: 'fa-calendar-week' },
+    { id: 'monthly', label: 'Monthly Reports', icon: 'fa-calendar-alt' },
+    { id: 'officers', label: 'Officers', icon: 'fa-user-shield' },
+    { id: 'analytics', label: 'Analytics', icon: 'fa-chart-line' },
+    { id: 'audit', label: 'Audit Log', icon: 'fa-clipboard-list' },
+    { id: 'settings', label: 'Settings', icon: 'fa-cog' },
+  ];
+
+  const pages = {
+    dashboard: <DashboardPage />,
+    reports: <ReportsPage />,
+    daily: <DailyReportsPage />,
+    weekly: <WeeklyReportsPage />,
+    monthly: <MonthlyReportsPage />,
+    officers: <OfficersPage />,
+    analytics: <AnalyticsPage />,
+    audit: <AuditPage />,
+    settings: <SettingsPage />,
+  };
+
+  return (
+    <div className="layout">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <img src="/logo.jpg" alt="PND" className="sidebar-logo" onError={e => e.target.style.display='none'} />
+          <div className="sidebar-brand">PND Command Center<span>Police Nationale de Djibouti</span></div>
+        </div>
+        <nav className="sidebar-nav">
+          {navItems.map(item => (
+            <button key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`} onClick={() => setPage(item.id)}>
+              <span className="nav-icon"><i className={`fas ${item.icon}`}></i></span>
+              {item.label}
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-footer">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
+            <span className="status-dot online"></span> System Online
+          </div>
+          <button className="nav-item" onClick={onLogout} style={{ color: 'var(--danger)' }}>
+            <span className="nav-icon"><i className="fas fa-sign-out-alt"></i></span> Logout
+          </button>
+        </div>
+      </aside>
+      <main className="main">{pages[page] || pages.dashboard}</main>
+    </div>
+  );
+}
+
+// ─── App ───
+function App() {
+  const [user, setUser] = useState(() => { try { return JSON.parse(localStorage.getItem('pnd_admin')) } catch { return null } });
+  const [page, setPage] = useState('dashboard');
+
+  if (!user) return <LoginPage onLogin={setUser} />;
+
+  return (
+    <AuthProvider>
+      <ToastProvider>
+        <AppLayout page={page} setPage={setPage} onLogout={() => { localStorage.removeItem('pnd_admin'); setUser(null); }} />
+      </ToastProvider>
+    </AuthProvider>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
